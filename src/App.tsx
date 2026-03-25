@@ -173,11 +173,8 @@ export default function App() {
             </div>
             <div>
               <h1 className="max-w-3xl text-3xl font-semibold tracking-tight text-white md:text-5xl">
-                用户 1 的轨迹主视图
+                轨迹主视图
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                以日期为主入口，支持细化到任意时间范围。地图显示当天轨迹线、起终点位置和明细点位，数据直接来自现有后端 /api/locations 接口。
-              </p>
             </div>
           </div>
           <div className="rounded-[28px] border border-white/10 bg-slate-950/60 p-4 md:p-5">
@@ -265,21 +262,19 @@ export default function App() {
           })}
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <div className="space-y-4">
-            <TrackMap points={points} />
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300 backdrop-blur-lg">
-              <div className="flex items-center gap-2 text-slate-100">
-                <MapPinned className="h-4 w-4 text-emerald-300" />
-                地图说明
-              </div>
-              <p className="mt-3 leading-6">
-                绿色圆点表示起点，橙色圆点表示终点，轨迹线按 recordedAt 时间升序连接。若未配置 VITE_AMAP_KEY，地图区域会提示配置缺失。
-              </p>
+        <section className="space-y-4">
+          <TrackMap points={points} />
+          <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300 backdrop-blur-lg">
+            <div className="flex items-center gap-2 text-slate-100">
+              <MapPinned className="h-4 w-4 text-emerald-300" />
+              地图说明
             </div>
+            <p className="mt-3 leading-6">
+              绿色圆点表示起点，橙色圆点表示终点，轨迹线按 recordedAt 时间升序连接。
+            </p>
           </div>
 
-          <aside className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/10 backdrop-blur-lg">
+          <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-xl shadow-black/10 backdrop-blur-lg">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">轨迹明细</h2>
               <span className="rounded-full border border-white/10 bg-slate-950/50 px-3 py-1 text-xs text-slate-300">
@@ -306,7 +301,7 @@ export default function App() {
                       {point.deviceId}
                     </span>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300">
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300 md:grid-cols-4">
                     <div>
                       <p className="text-slate-500">纬度</p>
                       <p className="mt-1 font-medium text-slate-100">{point.latitude.toFixed(6)}</p>
@@ -331,7 +326,7 @@ export default function App() {
                 </article>
               ))}
             </div>
-          </aside>
+          </section>
         </section>
       </div>
     </main>

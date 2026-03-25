@@ -9,8 +9,27 @@ function getDefaultApiBaseUrl() {
   return `${window.location.protocol}//${window.location.hostname}:6000/api`;
 }
 
+function normalizeApiBaseUrl(rawBaseUrl: string) {
+  const trimmedBaseUrl = rawBaseUrl.trim().replace(/\/$/, '');
+
+  if (!trimmedBaseUrl) {
+    return getDefaultApiBaseUrl();
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedBaseUrl);
+    parsedUrl.pathname = parsedUrl.pathname.endsWith('/api')
+      ? parsedUrl.pathname.replace(/\/$/, '')
+      : `${parsedUrl.pathname.replace(/\/$/, '')}/api`;
+
+    return parsedUrl.toString().replace(/\/$/, '');
+  } catch {
+    return trimmedBaseUrl.endsWith('/api') ? trimmedBaseUrl : `${trimmedBaseUrl}/api`;
+  }
+}
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || getDefaultApiBaseUrl(),
+  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL || getDefaultApiBaseUrl()),
   timeout: 15000,
 });
 

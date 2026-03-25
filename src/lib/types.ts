@@ -5,6 +5,9 @@ export type LocationPoint = {
   deviceId: string;
   latitude: number;
   longitude: number;
+  rawLatitude?: number;
+  rawLongitude?: number;
+  coordinateSystem?: 'GCJ-02';
   recordedAt: string;
   accuracy?: number;
   speed?: number;
