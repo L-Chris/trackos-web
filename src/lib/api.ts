@@ -1,5 +1,13 @@
 import axios from 'axios';
-import { TRACK_USER_ID, type LocationApiEnvelope, type LocationPoint } from './types';
+import {
+  TRACK_USER_ID,
+  type AppUsageSummaryApiEnvelope,
+  type LocationApiEnvelope,
+  type LocationPoint,
+  type UsageEventApiEnvelope,
+  type UsageRankingApiEnvelope,
+  type UsageTrendApiEnvelope,
+} from './types';
 
 function getDefaultApiBaseUrl() {
   if (typeof window === 'undefined') {
@@ -45,5 +53,83 @@ export async function fetchLocations(startAt: string, endAt: string) {
   return response.data.data.points.sort(
     (left: LocationPoint, right: LocationPoint) =>
       new Date(left.recordedAt).getTime() - new Date(right.recordedAt).getTime(),
+  );
+}
+
+type UsageSummaryQuery = {
+  startAt: string;
+  endAt: string;
+  deviceId?: string;
+  packageName?: string;
+};
+
+type UsageEventQuery = UsageSummaryQuery & {
+  eventType?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export async function fetchAppUsageSummaries(query: UsageSummaryQuery) {
+  const response = await api.get<AppUsageSummaryApiEnvelope>('/app-usage-summaries', {
+    params: {
+      userId: TRACK_USER_ID,
+      startAt: query.startAt,
+      endAt: query.endAt,
+      deviceId: query.deviceId || undefined,
+      packageName: query.packageName || undefined,
+    },
+  });
+
+  return response.data.data.summaries.sort(
+    (left, right) => new Date(left.windowStartAt).getTime() - new Date(right.windowStartAt).getTime(),
+  );
+}
+
+export async function fetchUsageRanking(query: UsageSummaryQuery & { limit?: number }) {
+  const response = await api.get<UsageRankingApiEnvelope>('/app-usage-summaries/ranking', {
+    params: {
+      userId: TRACK_USER_ID,
+      startAt: query.startAt,
+      endAt: query.endAt,
+      deviceId: query.deviceId || undefined,
+      packageName: query.packageName || undefined,
+      limit: query.limit,
+    },
+  });
+
+  return response.data.data.rankings;
+}
+
+export async function fetchUsageTrend(query: UsageSummaryQuery & { bucket?: string }) {
+  const response = await api.get<UsageTrendApiEnvelope>('/app-usage-summaries/trend', {
+    params: {
+      userId: TRACK_USER_ID,
+      startAt: query.startAt,
+      endAt: query.endAt,
+      deviceId: query.deviceId || undefined,
+      packageName: query.packageName || undefined,
+      bucket: query.bucket || undefined,
+    },
+  });
+
+  return response.data.data.buckets;
+}
+
+export async function fetchUsageEvents(query: UsageEventQuery) {
+  const response = await api.get<UsageEventApiEnvelope>('/usage-events', {
+    params: {
+      userId: TRACK_USER_ID,
+      startAt: query.startAt,
+      endAt: query.endAt,
+      deviceId: query.deviceId || undefined,
+      packageName: query.packageName || undefined,
+      eventType: query.eventType || undefined,
+      limit: query.limit,
+      offset: query.offset,
+    },
+  });
+
+  return response.data.data.events.sort(
+    (left, right) => new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
   );
 }

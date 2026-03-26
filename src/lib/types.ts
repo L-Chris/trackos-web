@@ -36,3 +36,83 @@ export type TrackStats = {
   minLongitude: number | null;
   maxLongitude: number | null;
 };
+
+export type AppUsageSummary = {
+  id: string;
+  deviceId: string;
+  packageName: string;
+  appName: string;
+  windowStartAt: string;
+  windowEndAt: string;
+  foregroundTimeMs: number;
+  lastUsedAt: string | null;
+};
+
+export type AppUsageSummaryResponse = {
+  userId: string;
+  summaries: AppUsageSummary[];
+};
+
+export type AppUsageSummaryApiEnvelope = {
+  success: boolean;
+  data: AppUsageSummaryResponse;
+};
+
+export type UsageRankingItem = {
+  packageName: string;
+  appName: string;
+  totalForegroundTimeMs: number;
+  lastUsedAt: string | null;
+  deviceCount: number;
+  recordCount: number;
+};
+
+export type UsageRankingResponse = {
+  userId: string;
+  rankings: UsageRankingItem[];
+};
+
+export type UsageRankingApiEnvelope = {
+  success: boolean;
+  data: UsageRankingResponse;
+};
+
+export type UsageTrendBucket = {
+  bucketStartAt: string;
+  bucketEndAt: string;
+  totalForegroundTimeMs: number;
+  activeAppCount: number;
+};
+
+export type UsageTrendResponse = {
+  userId: string;
+  bucket: string;
+  buckets: UsageTrendBucket[];
+};
+
+export type UsageTrendApiEnvelope = {
+  success: boolean;
+  data: UsageTrendResponse;
+};
+
+export type UsageEvent = {
+  id: string;
+  deviceId: string;
+  recordKey: string;
+  eventType: string;
+  packageName: string | null;
+  className: string | null;
+  occurredAt: string;
+  source: string;
+  metadata: string | null;
+};
+
+export type UsageEventResponse = {
+  userId: string;
+  events: UsageEvent[];
+};
+
+export type UsageEventApiEnvelope = {
+  success: boolean;
+  data: UsageEventResponse;
+};

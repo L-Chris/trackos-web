@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 6001,
-    allowedHosts: ['track.rethinkos.com', '172.21.0.1'],
+    allowedHosts: ['track.rethinkos.com', '172.21.0.1', 'pi.tailc1b810.ts.net'],
     hmr: {
       host: 'track.rethinkos.com',
       protocol: 'wss',
@@ -17,6 +17,6 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: 6001,
-    allowedHosts: ['track.rethinkos.com', '172.21.0.1'],
+    allowedHosts: ['track.rethinkos.com', '172.21.0.1', 'pi.tailc1b810.ts.net'],
   },
 });
