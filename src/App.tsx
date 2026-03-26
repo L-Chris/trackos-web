@@ -160,6 +160,11 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [lastQueryLabel, setLastQueryLabel] = useState('');
 
+  const queryRange = useMemo(
+    () => toRange(selectedDate, startTime, endTime),
+    [selectedDate, startTime, endTime],
+  );
+
   const stats = useMemo(() => calculateStats(points), [points]);
 
   const usageStats = useMemo(() => {
@@ -188,7 +193,7 @@ export default function App() {
   );
 
   async function loadTrack() {
-    const { startAt, endAt } = toRange(selectedDate, startTime, endTime);
+    const { startAt, endAt } = queryRange;
     if (new Date(startAt).getTime() > new Date(endAt).getTime()) {
       setError('开始时间不能晚于结束时间');
       setPoints([]);
@@ -227,7 +232,7 @@ export default function App() {
           deviceId: eventDeviceFilter || undefined,
           packageName: eventPackageFilter || undefined,
           eventType: eventTypeFilter === 'ALL' ? undefined : eventTypeFilter,
-          limit: 200,
+          limit: 500,
           offset: 0,
         }),
       ]);
@@ -658,7 +663,10 @@ export default function App() {
               </div>
             </section>
 
-            <UsageEventsTimeline events={usageEvents} />
+            <UsageEventsTimeline
+              events={usageEvents}
+              queryRange={queryRange}
+            />
           </section>
         ) : null}
       </div>
