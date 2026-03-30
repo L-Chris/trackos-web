@@ -17,6 +17,7 @@ import { UsageTrendChart } from './components/UsageTrendChart';
 import {
   fetchAppUsageSummaries,
   fetchLocations,
+  fetchMoveEvents,
   fetchUsageEvents,
   fetchUsageRanking,
   fetchUsageTrend,
@@ -24,6 +25,7 @@ import {
 import type {
   AppUsageSummary,
   LocationPoint,
+  MoveEvent,
   TrackStats,
   UsageEvent,
   UsageRankingItem,
@@ -151,6 +153,7 @@ export default function App() {
   const [usageRanking, setUsageRanking] = useState<UsageRankingItem[]>([]);
   const [usageTrend, setUsageTrend] = useState<UsageTrendBucket[]>([]);
   const [usageEvents, setUsageEvents] = useState<UsageEvent[]>([]);
+  const [moveEvents, setMoveEvents] = useState<MoveEvent[]>([]);
   const [usageDeviceFilter, setUsageDeviceFilter] = useState('');
   const [usagePackageFilter, setUsagePackageFilter] = useState('');
   const [eventDeviceFilter, setEventDeviceFilter] = useState('');
@@ -204,7 +207,7 @@ export default function App() {
     setError(null);
 
     try {
-      const [locationResult, summaryResult, rankingResult, trendResult, eventResult] = await Promise.all([
+      const [locationResult, summaryResult, rankingResult, trendResult, eventResult, moveEventResult] = await Promise.all([
         fetchLocations(startAt, endAt),
         fetchAppUsageSummaries({
           startAt,
@@ -235,12 +238,18 @@ export default function App() {
           limit: 500,
           offset: 0,
         }),
+        fetchMoveEvents({
+          startAt,
+          endAt,
+          limit: 500,
+        }),
       ]);
       setPoints(locationResult);
       setUsageSummaries(summaryResult);
       setUsageRanking(rankingResult);
       setUsageTrend(trendResult);
       setUsageEvents(eventResult);
+      setMoveEvents(moveEventResult);
       setLastQueryLabel(`${selectedDate} ${startTime} - ${endTime}`);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : '轨迹查询失败');
@@ -249,6 +258,7 @@ export default function App() {
       setUsageRanking([]);
       setUsageTrend([]);
       setUsageEvents([]);
+      setMoveEvents([]);
     } finally {
       setIsLoading(false);
     }
@@ -665,6 +675,7 @@ export default function App() {
 
             <UsageEventsTimeline
               events={usageEvents}
+              moveEvents={moveEvents}
               queryRange={queryRange}
             />
           </section>

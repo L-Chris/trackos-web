@@ -116,3 +116,22 @@ export type UsageEventApiEnvelope = {
   success: boolean;
   data: UsageEventResponse;
 };
+
+export type MoveEvent = {
+  id: string;
+  deviceId: string;
+  recordKey: string;
+  moveType: string;
+  confidence: number | null;
+  occurredAt: string;
+};
+
+export type MoveEventResponse = {
+  userId: string;
+  events: MoveEvent[];
+};
+
+export type MoveEventApiEnvelope = {
+  success: boolean;
+  data: MoveEventResponse;
+};

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type WheelEvent } from 'react';
 import { scaleTime } from 'd3-scale';
-import type { UsageEvent } from '../lib/types';
+import type { MoveEvent, UsageEvent } from '../lib/types';
 
 type UsageEventsTimelineProps = {
   events: UsageEvent[];
+  moveEvents: MoveEvent[];
   queryRange: {
     startAt: string;
     endAt: string;
@@ -211,7 +212,7 @@ function deriveTimelineSegments(events: UsageEvent[], queryEndMs: number) {
   return sessions.sort((left, right) => left.startMs - right.startMs);
 }
 
-export function UsageEventsTimeline({ events, queryRange }: UsageEventsTimelineProps) {
+export function UsageEventsTimeline({ events, moveEvents, queryRange }: UsageEventsTimelineProps) {
   const queryStartMs = new Date(queryRange.startAt).getTime();
   const queryEndMs = new Date(queryRange.endAt).getTime();
   const totalRangeMs = Math.max(60 * 1000, queryEndMs - queryStartMs);
@@ -559,6 +560,59 @@ export function UsageEventsTimeline({ events, queryRange }: UsageEventsTimelineP
                   />
                 </div>
               </div>
+        </section>
+
+        <section className="rounded-[24px] border border-white/10 bg-slate-950/60 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-white">活动状态总览</p>
+              <p className="mt-1 text-xs text-slate-400">全时段活动状态分布，颜色对应不同运动类型</p>
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-400">
+              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-slate-400" />STILL</span>
+              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />WALKING</span>
+              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" />RUNNING</span>
+              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-sky-400" />IN_VEHICLE</span>
+              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-400" />ON_BICYCLE</span>
+              <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-slate-600" />UNKNOWN</span>
+            </div>
+          </div>
+
+          <div className="relative mt-4 h-12 rounded-2xl border border-white/8 bg-slate-900/80">
+            {moveEvents.map((event, index) => {
+              const startMs = new Date(event.occurredAt).getTime();
+              const endMs = index + 1 < moveEvents.length
+                ? new Date(moveEvents[index + 1].occurredAt).getTime()
+                : queryEndMs;
+              const clampedStart = Math.max(startMs, queryStartMs);
+              const clampedEnd = Math.min(endMs, queryEndMs);
+              if (clampedEnd <= clampedStart) return null;
+              const left = ((clampedStart - queryStartMs) / totalRangeMs) * 100;
+              const width = Math.max(0.2, ((clampedEnd - clampedStart) / totalRangeMs) * 100);
+              const colorMap: Record<string, string> = {
+                STILL: '#94a3b8',
+                WALKING: '#34d399',
+                RUNNING: '#fbbf24',
+                IN_VEHICLE: '#38bdf8',
+                ON_BICYCLE: '#c084fc',
+                UNKNOWN: '#475569',
+              };
+              const color = colorMap[event.moveType] ?? '#475569';
+              return (
+                <span
+                  key={event.id}
+                  className="absolute top-2 h-8 rounded-sm opacity-80"
+                  style={{ left: `${left}%`, width: `${width}%`, background: color }}
+                  title={`${event.moveType}${event.confidence != null ? ` (${event.confidence.toFixed(0)}%)` : ''}`}
+                />
+              );
+            })}
+            {moveEvents.length === 0 && (
+              <span className="absolute inset-0 flex items-center justify-center text-[11px] text-slate-500">
+                当前范围没有活动状态数据
+              </span>
+            )}
+          </div>
         </section>
 
         <section ref={viewportRef} className="rounded-[24px] border border-white/10 bg-slate-950/45 p-4">

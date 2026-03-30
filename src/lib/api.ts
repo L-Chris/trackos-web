@@ -4,6 +4,7 @@ import {
   type AppUsageSummaryApiEnvelope,
   type LocationApiEnvelope,
   type LocationPoint,
+  type MoveEventApiEnvelope,
   type UsageEventApiEnvelope,
   type UsageRankingApiEnvelope,
   type UsageTrendApiEnvelope,
@@ -131,5 +132,30 @@ export async function fetchUsageEvents(query: UsageEventQuery) {
 
   return response.data.data.events.sort(
     (left, right) => new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime(),
+  );
+}
+
+type MoveEventQuery = {
+  startAt: string;
+  endAt: string;
+  deviceId?: string;
+  moveType?: string;
+  limit?: number;
+};
+
+export async function fetchMoveEvents(query: MoveEventQuery) {
+  const response = await api.get<MoveEventApiEnvelope>('/move-events', {
+    params: {
+      userId: TRACK_USER_ID,
+      startAt: query.startAt,
+      endAt: query.endAt,
+      deviceId: query.deviceId || undefined,
+      moveType: query.moveType || undefined,
+      limit: query.limit,
+    },
+  });
+
+  return response.data.data.events.sort(
+    (left, right) => new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime(),
   );
 }
