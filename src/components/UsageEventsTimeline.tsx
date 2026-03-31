@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type WheelEvent } from 'react';
 import { scaleTime } from 'd3-scale';
-import type { MoveEvent, UsageEvent } from '../lib/types';
+import type { MoveEvent, StayPoint, UsageEvent } from '../lib/types';
 
 type UsageEventsTimelineProps = {
   events: UsageEvent[];
   moveEvents: MoveEvent[];
+  stayPoints: StayPoint[];
   queryRange: {
     startAt: string;
     endAt: string;
@@ -212,7 +213,7 @@ function deriveTimelineSegments(events: UsageEvent[], queryEndMs: number) {
   return sessions.sort((left, right) => left.startMs - right.startMs);
 }
 
-export function UsageEventsTimeline({ events, moveEvents, queryRange }: UsageEventsTimelineProps) {
+export function UsageEventsTimeline({ events, moveEvents, stayPoints, queryRange }: UsageEventsTimelineProps) {
   const queryStartMs = new Date(queryRange.startAt).getTime();
   const queryEndMs = new Date(queryRange.endAt).getTime();
   const totalRangeMs = Math.max(60 * 1000, queryEndMs - queryStartMs);
@@ -226,10 +227,12 @@ export function UsageEventsTimeline({ events, moveEvents, queryRange }: UsageEve
     endMs: queryEndMs,
   });
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedStayPointId, setSelectedStayPointId] = useState<number | null>(null);
 
   useEffect(() => {
     setVisibleRange({ startMs: queryStartMs, endMs: queryEndMs });
     setSelectedEventId(null);
+    setSelectedStayPointId(null);
   }, [queryEndMs, queryStartMs]);
 
   useEffect(() => {
@@ -561,6 +564,141 @@ export function UsageEventsTimeline({ events, moveEvents, queryRange }: UsageEve
                 </div>
               </div>
         </section>
+
+        {stayPoints.length > 0 ? (
+          <section className="rounded-[24px] border border-violet-400/20 bg-slate-950/60 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-white">停留点分析</p>
+                <p className="mt-1 text-xs text-slate-400">ST-DBSCAN 聚类识别的停留位置，点击查看详情</p>
+              </div>
+              <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-3 py-1 text-[11px] text-violet-200">
+                {stayPoints.length} 处停留
+              </span>
+            </div>
+
+            {/* Timeline strip */}
+            <div className="relative mt-4 h-9 rounded-2xl border border-white/8 bg-slate-900/80">
+              {stayPoints.map((sp) => {
+                const spStartMs = new Date(sp.startTime).getTime();
+                const spEndMs = new Date(sp.endTime).getTime();
+                const clampedStart = Math.max(spStartMs, queryStartMs);
+                const clampedEnd = Math.min(spEndMs, queryEndMs);
+                if (clampedEnd <= clampedStart) return null;
+                const left = ((clampedStart - queryStartMs) / totalRangeMs) * 100;
+                const width = Math.max(0.5, ((clampedEnd - clampedStart) / totalRangeMs) * 100);
+                const isSelected = selectedStayPointId === sp.id;
+                return (
+                  <button
+                    key={sp.id}
+                    type="button"
+                    onClick={() => setSelectedStayPointId(isSelected ? null : sp.id)}
+                    className="absolute top-1 h-7 rounded-lg border transition"
+                    style={{
+                      left: `${left}%`,
+                      width: `${width}%`,
+                      minWidth: '6px',
+                      background: isSelected
+                        ? 'rgba(139,92,246,0.55)'
+                        : 'rgba(139,92,246,0.25)',
+                      borderColor: isSelected
+                        ? 'rgba(167,139,250,0.8)'
+                        : 'rgba(139,92,246,0.4)',
+                      boxShadow: isSelected ? '0 0 0 3px rgba(139,92,246,0.2)' : undefined,
+                    }}
+                    title={`${sp.poiName ?? sp.address ?? '停留点'} · ${Math.round(sp.durationSec / 60)} 分钟`}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Selected stay point detail card */}
+            {selectedStayPointId !== null ? (() => {
+              const sp = stayPoints.find((s) => s.id === selectedStayPointId);
+              if (!sp) return null;
+              const placeLabelNames: Record<string, string> = {
+                home: '住宅', work: '办公', food: '餐饮', shop: '购物',
+                leisure: '休闲', education: '教育', medical: '医疗',
+                finance: '金融', transport: '交通', other: '其他',
+              };
+              const labelName = sp.placeLabel ? placeLabelNames[sp.placeLabel] ?? sp.placeLabel : null;
+              const start = new Date(sp.startTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              const end = new Date(sp.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+              const durationMin = Math.round(sp.durationSec / 60);
+              return (
+                <div className="mt-3 rounded-2xl border border-violet-400/20 bg-violet-400/5 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{sp.poiName ?? sp.address ?? `停留点 #${sp.id + 1}`}</p>
+                      {sp.address && sp.poiName ? (
+                        <p className="mt-1 text-xs text-slate-400">{sp.address}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-[11px]">
+                      {labelName ? (
+                        <span className="rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-1 text-violet-200">
+                          {labelName}
+                        </span>
+                      ) : null}
+                      {sp.poiType ? (
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-slate-300">
+                          {sp.poiType.split(';')[0]}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300 sm:grid-cols-4">
+                    <div>
+                      <p className="text-slate-500">时段</p>
+                      <p className="mt-1 font-medium text-slate-100">{start} – {end}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">停留时长</p>
+                      <p className="mt-1 font-medium text-emerald-300">{durationMin} 分钟</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">聚类半径</p>
+                      <p className="mt-1 font-medium text-slate-100">{sp.radiusM} m</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">GPS 点数</p>
+                      <p className="mt-1 font-medium text-slate-100">{sp.pointCount}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })() : null}
+
+            {/* List of all stay points */}
+            <div className="mt-3 space-y-2">
+              {stayPoints.map((sp) => {
+                const isSelected = selectedStayPointId === sp.id;
+                const start = new Date(sp.startTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                const end = new Date(sp.endTime).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                const durationMin = Math.round(sp.durationSec / 60);
+                const name = sp.poiName ?? sp.address ?? `停留 #${sp.id + 1}`;
+                return (
+                  <button
+                    key={sp.id}
+                    type="button"
+                    onClick={() => setSelectedStayPointId(isSelected ? null : sp.id)}
+                    className={`block w-full rounded-2xl border p-3 text-left text-xs transition ${
+                      isSelected
+                        ? 'border-violet-400/40 bg-violet-400/10'
+                        : 'border-white/8 bg-slate-900/60 hover:border-violet-400/20 hover:bg-slate-900/90'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate font-medium text-slate-100">{name}</p>
+                      <span className="shrink-0 text-emerald-300">{durationMin} min</span>
+                    </div>
+                    <p className="mt-1 text-slate-500">{start} – {end}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
         <section className="rounded-[24px] border border-white/10 bg-slate-950/60 p-4">
           <div className="flex items-center justify-between gap-3">

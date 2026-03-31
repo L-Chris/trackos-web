@@ -18,6 +18,7 @@ import {
   fetchAppUsageSummaries,
   fetchLocations,
   fetchMoveEvents,
+  fetchStayPoints,
   fetchUsageEvents,
   fetchUsageRanking,
   fetchUsageTrend,
@@ -26,6 +27,7 @@ import type {
   AppUsageSummary,
   LocationPoint,
   MoveEvent,
+  StayPoint,
   TrackStats,
   UsageEvent,
   UsageRankingItem,
@@ -154,6 +156,7 @@ export default function App() {
   const [usageTrend, setUsageTrend] = useState<UsageTrendBucket[]>([]);
   const [usageEvents, setUsageEvents] = useState<UsageEvent[]>([]);
   const [moveEvents, setMoveEvents] = useState<MoveEvent[]>([]);
+  const [stayPoints, setStayPoints] = useState<StayPoint[]>([]);
   const [usageDeviceFilter, setUsageDeviceFilter] = useState('');
   const [usagePackageFilter, setUsagePackageFilter] = useState('');
   const [eventDeviceFilter, setEventDeviceFilter] = useState('');
@@ -207,7 +210,7 @@ export default function App() {
     setError(null);
 
     try {
-      const [locationResult, summaryResult, rankingResult, trendResult, eventResult, moveEventResult] = await Promise.all([
+      const [locationResult, summaryResult, rankingResult, trendResult, eventResult, moveEventResult, stayPointResult] = await Promise.all([
         fetchLocations(startAt, endAt),
         fetchAppUsageSummaries({
           startAt,
@@ -243,6 +246,7 @@ export default function App() {
           endAt,
           limit: 500,
         }),
+        fetchStayPoints({ startAt, endAt }),
       ]);
       setPoints(locationResult);
       setUsageSummaries(summaryResult);
@@ -250,6 +254,7 @@ export default function App() {
       setUsageTrend(trendResult);
       setUsageEvents(eventResult);
       setMoveEvents(moveEventResult);
+      setStayPoints(stayPointResult.stayPoints);
       setLastQueryLabel(`${selectedDate} ${startTime} - ${endTime}`);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : '轨迹查询失败');
@@ -259,6 +264,7 @@ export default function App() {
       setUsageTrend([]);
       setUsageEvents([]);
       setMoveEvents([]);
+      setStayPoints([]);
     } finally {
       setIsLoading(false);
     }
@@ -446,7 +452,7 @@ export default function App() {
 
         {activeTab === 'track' ? (
           <section className="space-y-4">
-            <TrackMap points={points} />
+            <TrackMap points={points} stayPoints={stayPoints} />
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 text-sm text-slate-300 backdrop-blur-lg">
               <div className="flex items-center gap-2 text-slate-100">
                 <MapPinned className="h-4 w-4 text-emerald-300" />
@@ -676,6 +682,7 @@ export default function App() {
             <UsageEventsTimeline
               events={usageEvents}
               moveEvents={moveEvents}
+              stayPoints={stayPoints}
               queryRange={queryRange}
             />
           </section>

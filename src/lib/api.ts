@@ -5,6 +5,7 @@ import {
   type LocationApiEnvelope,
   type LocationPoint,
   type MoveEventApiEnvelope,
+  type StayPointApiEnvelope,
   type UsageEventApiEnvelope,
   type UsageRankingApiEnvelope,
   type UsageTrendApiEnvelope,
@@ -158,4 +159,27 @@ export async function fetchMoveEvents(query: MoveEventQuery) {
   return response.data.data.events.sort(
     (left, right) => new Date(left.occurredAt).getTime() - new Date(right.occurredAt).getTime(),
   );
+}
+
+type StayPointQuery = {
+  startAt: string;
+  endAt: string;
+  eps1?: number;
+  eps2?: number;
+  minPts?: number;
+};
+
+export async function fetchStayPoints(query: StayPointQuery) {
+  const response = await api.get<StayPointApiEnvelope>('/stay-points', {
+    params: {
+      userId: TRACK_USER_ID,
+      startAt: query.startAt,
+      endAt: query.endAt,
+      eps1: query.eps1,
+      eps2: query.eps2,
+      minPts: query.minPts,
+    },
+  });
+
+  return response.data.data;
 }

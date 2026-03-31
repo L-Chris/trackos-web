@@ -135,3 +135,41 @@ export type MoveEventApiEnvelope = {
   success: boolean;
   data: MoveEventResponse;
 };
+
+export type PlaceLabel =
+  | 'home'
+  | 'work'
+  | 'food'
+  | 'shop'
+  | 'leisure'
+  | 'education'
+  | 'medical'
+  | 'finance'
+  | 'transport'
+  | 'other';
+
+export type StayPoint = {
+  id: number;
+  centerLat: number;
+  centerLon: number;
+  startTime: string;
+  endTime: string;
+  durationSec: number;
+  pointCount: number;
+  radiusM: number;
+  address: string | null;
+  poiName: string | null;
+  poiType: string | null;
+  placeLabel: PlaceLabel | null;
+};
+
+export type StayPointResponse = {
+  userId: string;
+  stayPoints: StayPoint[];
+  noisePointCount: number;
+};
+
+export type StayPointApiEnvelope = {
+  success: boolean;
+  data: StayPointResponse;
+};
